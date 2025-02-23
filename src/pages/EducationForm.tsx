@@ -44,13 +44,7 @@ const EducationItem: React.FC<EducationItemProps> = ({
         value={edu.degree}
         onChange={(e) => handleChange("degree", e.target.value)}
       />
-      <input
-        className="w-full p-2 border rounded"
-        type="text"
-        placeholder="Field of Study"
-        value={edu.fieldOfStudy}
-        onChange={(e) => handleChange("fieldOfStudy", e.target.value)}
-      />
+
       <div className="flex flex-wrap gap-3">
         <input
           className="w-full  p-2 border rounded"
