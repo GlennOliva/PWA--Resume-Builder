@@ -1,0 +1,22 @@
+{
+    "name": "Resume Builder",
+    "short_name": "Resume Builder PWA",
+    "description": "PWA",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "icons": [
+      {
+        "src": "/src/assets/cv.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/src/assets/cv.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ]
+  }
+  

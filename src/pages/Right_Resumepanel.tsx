@@ -1,6 +1,5 @@
 import React, { useRef } from "react";
 import jsPDF from "jspdf";
-import domtoimage from "dom-to-image";
 
 interface FormData {
   fullName: string;
@@ -64,36 +63,180 @@ const RightResumePanel: React.FC<RightResumePanelProps> = ({
   skillsData,
   certificatesData,
 }) => {
-  const resumeRef = useRef<HTMLDivElement>(null);
+  const resumeRef = useRef(null);
 
   const handleDownloadPDF = async () => {
-    if (!resumeRef.current) return;
-
-    const element = resumeRef.current;
-    const scaleFactor = 5; // Adjusted for better resolution
-
-    try {
-      const dataUrl = await domtoimage.toPng(element, {
-        width: element.clientWidth * scaleFactor,
-        height: element.clientHeight * scaleFactor,
-        style: {
-          transform: `scale(${scaleFactor})`,
-          transformOrigin: "top left",
-          width: `${element.clientWidth * scaleFactor}px`,
-          height: `${element.clientHeight * scaleFactor}px`,
-        },
+    const doc = new jsPDF();
+    doc.setFont("helvetica", "bold");
+  
+    const margin = 20;
+    const pageWidth = doc.internal.pageSize.getWidth() - margin * 2;
+    const pageCenter = doc.internal.pageSize.getWidth() / 2;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let y = margin;
+  
+    // Function to check if a new page is needed
+    const checkPageBreak = (height = 10) => {
+      if (y + height > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+    };
+  
+    // Full Name (Centered)
+    doc.setFontSize(22);
+    doc.text(formData.fullName || "FULL NAME", pageCenter, y, { align: "center" });
+    y += 12;
+  
+    // Contact Info (Centered)
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(
+      `${formData.email || "EMAIL"} | ${formData.contact || "CONTACT #"} | ${formData.address || "LOCATION"}`,
+      pageCenter,
+      y,
+      { align: "center" }
+    );
+    y += 15;
+  
+    // Summary (Centered)
+    if (formData.summary) {
+      checkPageBreak(15);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "italic");
+      const summaryText = doc.splitTextToSize(formData.summary, pageWidth);
+      summaryText.forEach((line: string | string[]) => {
+        doc.text(line, pageCenter, y, { align: "center" });
+        y += 5;
       });
-
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (element.clientHeight * pdfWidth) / element.clientWidth;
-
-      pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
-      pdf.save(`${formData.fullName || "Resume"}.pdf`);
-    } catch (error) {
-      console.error("Error generating PDF:", error);
+      y += 10;
     }
+  
+    // Function to add section titles (Left-aligned)
+    const addSectionTitle = (title: string | string[]) => {
+      checkPageBreak(15);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text(title, margin, y);
+      y += 5;
+      doc.setLineWidth(0.5);
+      doc.line(margin, y, pageWidth + margin, y);
+      y += 7;
+    };
+  
+    // EXPERIENCE SECTION
+    if (experienceData.length > 0) {
+      addSectionTitle("PROFESSIONAL EXPERIENCE");
+  
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+  
+      experienceData.forEach((exp) => {
+        checkPageBreak(20);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${exp.company} - ${exp.position}`, margin, y);
+        y += 5;
+  
+        doc.setFont("helvetica", "normal");
+        doc.text(`${exp.startDate} - ${exp.currentlyWorking ? "Present" : exp.endDate}`, margin, y);
+        y += 5;
+  
+        // Justify Job Description
+        const jobDescriptionText = doc.splitTextToSize(exp.jobDescription, pageWidth);
+        jobDescriptionText.forEach((line: string | string[]) => {
+          checkPageBreak(5);
+          doc.text(line, margin, y);
+          y += 5;
+        });
+  
+        y += 8;
+      });
+    }
+  
+    // EDUCATION SECTION
+    if (educationData.length > 0) {
+      addSectionTitle("EDUCATION");
+  
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+  
+      educationData.forEach((edu) => {
+        checkPageBreak(20);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${edu.school} - ${edu.degree}`, margin, y);
+        y += 5;
+  
+        doc.setFont("helvetica", "normal");
+        doc.text(`${edu.startDate} - ${edu.currentlyStudy ? "Present" : edu.endDate}`, margin, y);
+        y += 8;
+      });
+    }
+  
+    // PROJECTS SECTION
+    if (projectData.length > 0) {
+      addSectionTitle("PROJECTS");
+  
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+  
+      projectData.forEach((proj) => {
+        checkPageBreak(20);
+        doc.setFont("helvetica", "bold");
+        doc.text(proj.projectName, margin, y);
+        y += 5;
+  
+        doc.setFont("helvetica", "normal");
+        doc.text(`${proj.startDate} - ${proj.currentlyProject ? "Present" : proj.endDate}`, margin, y);
+        y += 5;
+  
+        // Justify Project Description
+        const projectDescriptionText = doc.splitTextToSize(proj.projectDescription, pageWidth);
+        projectDescriptionText.forEach((line: string | string[]) => {
+          checkPageBreak(5);
+          doc.text(line, margin, y);
+          y += 5;
+        });
+  
+        y += 8;
+      });
+    }
+  
+    // SKILLS SECTION
+    if (skillsData.length > 0) {
+      addSectionTitle("SKILLS");
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(skillsData.map((skill) => skill.skillName).join(", "), margin, y);
+      y += 8;
+    }
+  
+    // CERTIFICATIONS SECTION
+    if (certificatesData.length > 0) {
+      addSectionTitle("CERTIFICATIONS");
+  
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+  
+      certificatesData.forEach((cert) => {
+        checkPageBreak(15);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${cert.name} - ${cert.organization}`, margin, y);
+        y += 5;
+  
+        doc.setFont("helvetica", "normal");
+        doc.text(`${cert.issueDate} - ${cert.doesNotExpire ? "No Expiry" : cert.expiryDate}`, margin, y);
+        y += 8;
+      });
+    }
+  
+    doc.save(`${formData.fullName || "Resume"}.pdf`);
   };
+  
+
+
+
+  
+  
 
   return (
     <div className="w-full lg:w-1/2 p-4 bg-white border shadow-md rounded-md">
