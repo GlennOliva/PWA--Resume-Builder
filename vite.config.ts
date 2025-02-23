@@ -20,12 +20,12 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: '/public/icons/cv.png',
+            src: '/icons/cv.png',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: '/public/icons/cv.png',
+            src: '/icons/cv.png',
             sizes: '512x512',
             type: 'image/png',
           },
